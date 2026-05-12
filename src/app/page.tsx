@@ -27,6 +27,37 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (plan: string) => {
+    if (plan === "studio") {
+      window.location.href = "mailto:sales@apppulse.ai";
+      return;
+    }
+
+    setCheckoutLoading(plan);
+    try {
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan,
+          email: email || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to start checkout");
+      }
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +71,8 @@ export default function Home() {
       });
       if (res.ok) {
         setIsSubmitted(true);
-        setEmail("");
+        // After signup, redirect to Starter plan checkout
+        handleCheckout("starter");
       }
     } catch (error) {
       console.error("Signup failed:", error);
@@ -105,6 +137,7 @@ export default function Home() {
 
   const pricingPlans = [
     {
+      id: "starter",
       name: "Starter",
       price: "49",
       description: "For solo developers getting started",
@@ -120,6 +153,7 @@ export default function Home() {
       popular: false,
     },
     {
+      id: "growth",
       name: "Growth",
       price: "149",
       description: "For growing teams scaling their presence",
@@ -138,6 +172,7 @@ export default function Home() {
       popular: true,
     },
     {
+      id: "studio",
       name: "Studio",
       price: "299",
       description: "For agencies and serious operators",
@@ -172,7 +207,7 @@ export default function Home() {
             <a href="#features" className="text-text-secondary hover:text-text-primary transition-colors">Features</a>
             <a href="#how-it-works" className="text-text-secondary hover:text-text-primary transition-colors">How It Works</a>
             <a href="#pricing" className="text-text-secondary hover:text-text-primary transition-colors">Pricing</a>
-            <Button size="sm">Join Beta</Button>
+            <Button size="sm" onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>Join Beta</Button>
           </div>
 
           {/* Mobile menu button */}
@@ -190,7 +225,7 @@ export default function Home() {
             <a href="#features" className="text-text-secondary hover:text-text-primary" onClick={() => setMobileMenuOpen(false)}>Features</a>
             <a href="#how-it-works" className="text-text-secondary hover:text-text-primary" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
             <a href="#pricing" className="text-text-secondary hover:text-text-primary" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
-            <Button size="sm">Join Beta</Button>
+            <Button size="sm" onClick={() => { setMobileMenuOpen(false); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}>Join Beta</Button>
           </div>
         )}
       </nav>
@@ -409,8 +444,13 @@ export default function Home() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full" variant={plan.popular ? "primary" : "secondary"}>
-                    {plan.cta}
+                  <Button 
+                    className="w-full" 
+                    variant={plan.popular ? "primary" : "secondary"}
+                    onClick={() => handleCheckout(plan.id)}
+                    disabled={checkoutLoading === plan.id}
+                  >
+                    {checkoutLoading === plan.id ? "Redirecting..." : plan.cta}
                   </Button>
                 </CardFooter>
               </Card>

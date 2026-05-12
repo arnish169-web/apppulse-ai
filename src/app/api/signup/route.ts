@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     await turso.execute({
-      sql: "INSERT INTO signups (email, created_at) VALUES (?, datetime('now'))",
+      sql: "INSERT INTO users (id, email, created_at) VALUES (lower(hex(randomblob(16))), ?, datetime('now'))",
       args: [email],
     });
 
