@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@libsql/client";
 
-// Create Turso client
+export const runtime = "nodejs";
+
 const turso = createClient({
   url: process.env.TURSO_DATABASE_URL || "file:local.db",
   authToken: process.env.TURSO_AUTH_TOKEN,
@@ -15,7 +16,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
-    // Insert into users table
     await turso.execute({
       sql: "INSERT INTO users (id, email, created_at) VALUES (lower(hex(randomblob(16))), ?, datetime('now'))",
       args: [email],
@@ -25,7 +25,6 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error("Signup error:", error);
     
-    // Check if it's a duplicate email error
     if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
