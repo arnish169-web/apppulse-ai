@@ -30,11 +30,6 @@ export default function Home() {
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   const handleCheckout = async (plan: string) => {
-    if (plan === "studio") {
-      window.location.href = "mailto:sales@apppulse.ai";
-      return;
-    }
-
     setCheckoutLoading(plan);
     try {
       const res = await fetch("/api/create-checkout", {
@@ -185,7 +180,7 @@ export default function Home() {
         "Slack integration option",
         "Private Discord access",
       ],
-      cta: "Contact Sales",
+      cta: "Join Beta",
       popular: false,
     },
   ];
