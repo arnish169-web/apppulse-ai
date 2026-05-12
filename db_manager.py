@@ -1,5 +1,13 @@
-import subprocess
+import os
 import json
+import libsql_client
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Turso configuration
+TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL")
+TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN")
 
 def escape(s):
     if s is None:
@@ -9,13 +17,30 @@ def escape(s):
     return str(s)
 
 def run_query(query):
+    # If we are in the team environment and team-db is available, we could use it,
+    # but for production/GHA we use the libsql client.
+    
+    if not TURSO_DATABASE_URL or not TURSO_AUTH_TOKEN:
+        # Fallback to team-db CLI if env vars are missing (local dev)
+        import subprocess
+        try:
+            result = subprocess.check_output(['team-db', query], stderr=subprocess.STDOUT)
+            return json.loads(result)
+        except Exception as e:
+            # Silently fail if team-db is not available or query fails
+            return None
+
     try:
-        result = subprocess.check_output(['team-db', query], stderr=subprocess.STDOUT)
-        return json.loads(result)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running query: {e.output.decode()}")
-        return None
-    except json.JSONDecodeError:
+        with libsql_client.create_client_sync(url=TURSO_DATABASE_URL, authToken=TURSO_AUTH_TOKEN) as client:
+            result = client.execute(query)
+            # Convert ResultSet to a list of dicts to match expected format
+            columns = result.columns
+            rows = []
+            for row in result.rows:
+                rows.append(dict(zip(columns, row)))
+            return rows
+    except Exception as e:
+        print(f"Error running query via libsql: {e}")
         return None
 
 def upsert_app(app_id, name, developer_name=None, icon_url=None, current_rating=None, review_count=None):

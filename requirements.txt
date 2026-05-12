@@ -1,0 +1,6 @@
+playwright==1.48.0
+beautifulsoup4==4.12.3
+litellm==1.49.0
+resend==2.4.0
+libsql-client==0.0.1
+python-dotenv==1.0.1
