@@ -50,23 +50,23 @@ def analyze_sentiment():
 def generate_playbook():
     print("Generating strategic playbook...")
     # Get all apps and their rankings
-    rankings = db_manager.run_query(\"\"\"
+    rankings = db_manager.run_query("""
         SELECT a.name, r.rank, k.term 
         FROM apps a 
         JOIN rankings r ON a.id = r.app_id 
         JOIN keywords k ON r.keyword_id = k.id 
         WHERE r.date = CURRENT_DATE
-    \"\"\")
+    """)
     
     # Get recent reviews
-    reviews = db_manager.run_query(\"\"\"
+    reviews = db_manager.run_query("""
         SELECT a.name, r.sentiment, r.body 
         FROM reviews r 
         JOIN apps a ON r.app_id = a.id 
         ORDER BY r.date DESC LIMIT 20
-    \"\"\")
+    """)
     
-    prompt = f\"\"\"
+    prompt = f"""
     Act as a Competitor Intelligence Analyst for Shopify App Developers.
     Based on the following ranking data and recent reviews, generate a 3-point Strategic Playbook.
     
@@ -74,16 +74,16 @@ def generate_playbook():
     Recent Reviews: {reviews}
     
     Provide exactly 3 actionable recommendations in Markdown format.
-    \"\"\"
+    """
     
     try:
         if not os.environ.get("OPENAI_API_KEY"):
-            playbook = \"\"\"
+            playbook = """
 ### Strategic Playbook - $(date +%Y-%m-%d)
 1. **Monitor Search Rankings**: Competitors in 'AI Marketing' are gaining ground. Consider optimizing your metadata.
 2. **Address Feature Requests**: Users are asking for more automation in post-purchase flows.
 3. **Double Down on Praise**: Leverage positive feedback on your UI in your marketing copy.
-            \"\"\"
+            """
         else:
             response = completion(
                 model=SYNTHESIS_MODEL,
@@ -93,11 +93,12 @@ def generate_playbook():
         
         # Store the playbook as an alert/report for all users
         users = db_manager.run_query("SELECT id FROM users")
-        for user in users:
-            db_manager.run_query(f\"\"\"
-                INSERT INTO alerts (user_id, type, message) 
-                VALUES ('{user['id']}', 'Playbook', '{playbook.replace("'", "''")}')
-            \"\"\")
+        if users:
+            for user in users:
+                db_manager.run_query(f"""
+                    INSERT INTO alerts (user_id, type, message) 
+                    VALUES ('{user['id']}', 'Playbook', '{playbook.replace("'", "''")}')
+                """)
         print("Playbook generated and alerts created.")
     except Exception as e:
         print(f"Error generating playbook: {e}")
