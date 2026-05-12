@@ -15,9 +15,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
-    // Insert into signups table
+    // Insert into users table
     await turso.execute({
-      sql: "INSERT INTO signups (email, created_at) VALUES (?, datetime('now'))",
+      sql: "INSERT INTO users (id, email, created_at) VALUES (lower(hex(randomblob(16))), ?, datetime('now'))",
       args: [email],
     });
 
