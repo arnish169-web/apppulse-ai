@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
       mode: "subscription",
       subscription_data: { trial_period_days: 30 },
-      success_url: `${origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/welcome?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/pricing`,
     });
     return NextResponse.json({ url: session.url });
