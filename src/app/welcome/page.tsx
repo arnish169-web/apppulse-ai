@@ -24,16 +24,20 @@ async function getSession(sessionId: string) {
   }
 }
 
-export default async function DashboardPage({
+export default async function WelcomePage({
   searchParams,
 }: {
-  searchParams: { session_id?: string; cancel?: string };
+  searchParams: Promise<{ session_id?: string; cancel?: string }>;
 }) {
+  const params = await searchParams;
+  const sessionId = params.session_id;
+  const cancelled = params.cancel;
+
   let customerEmail = "";
   let plan = "";
   let status = "";
 
-  if (searchParams.cancel) {
+  if (cancelled) {
     return (
       <div className="min-h-screen bg-[#0B1121] flex items-center justify-center p-8">
         <div className="text-center">
@@ -47,8 +51,8 @@ export default async function DashboardPage({
     );
   }
 
-  if (searchParams.session_id) {
-    const session = await getSession(searchParams.session_id);
+  if (sessionId) {
+    const session = await getSession(sessionId);
     if (session) {
       customerEmail = session.customer_email || session.customer_details?.email || "";
       const priceId = session.line_items?.data?.[0]?.price?.id;
@@ -191,5 +195,4 @@ export default async function DashboardPage({
       </div>
     </div>
   );
-}// force redeploy
-// renamed to welcome
+}
