@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     if (!plan || !PRICE_IDS[plan]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
-    const origin = request.headers.get("origin");
+    const origin = request.headers.get("origin") || "https://apppulse-ai.vercel.app";
     const session = await stripe.checkout.sessions.create({
       customer_email: email,
       line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
